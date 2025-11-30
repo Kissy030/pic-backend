@@ -9,21 +9,24 @@ import { PicInfoModule } from './picInfo/picInfo.module';
 import { PicInfo } from './picInfo/entities/picInfo.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from './auth.guard';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule } from './redis/redis.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: 'src/.env',
+      envFilePath: '.env',
     }),
 
-    JwtModule.register({
+    JwtModule.registerAsync({
       global: true,
-      secret: 'wangyanzhen',
-      signOptions: {
-        expiresIn: '7d',
-      },
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET', 'fallback-dev-secret'),
+        signOptions: {
+          expiresIn: '7d',
+        },
+      }),
+      inject: [ConfigService],
     }),
     MailModule,
     UserModule,
