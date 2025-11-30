@@ -38,7 +38,6 @@ import { RedisModule } from './redis/redis.module';
       logging: true,
       poolSize: 10,
       connectorPackage: 'mysql2',
-      extra: {},
     }),
     PicInfoModule,
     RedisModule,

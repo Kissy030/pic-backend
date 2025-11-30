@@ -13,8 +13,7 @@ import { createClient } from 'redis';
       async useFactory() {
         const client = createClient({
           socket: {
-            host: 'localhost',
-            port: 6379,
+            host: 'redis-pic-container',
           },
         });
         await client.connect();
