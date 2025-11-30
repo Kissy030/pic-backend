@@ -1,15 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { RedisClientType } from 'redis';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
-  @Inject('REDIS_CLIENT')
-  private redisClient: RedisClientType;
-
-  async getHello() {
-    const value = await this.redisClient.keys('*');
-    console.log(value);
-
-    return 'redis hello';
+  getHello(): string {
+    return 'Hello World!';
   }
 }
