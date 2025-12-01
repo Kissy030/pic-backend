@@ -22,7 +22,7 @@ export class OssService {
     const url = this.client.signatureUrl(objectName, {
       method: 'PUT',
       expires,
-      headers: { 'content-Type': contentType },
+      headers: { 'content-type': contentType },
     });
 
     return {
