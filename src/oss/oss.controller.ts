@@ -9,7 +9,6 @@ export class OssController {
   getUploadUrl(
     @Query('fileName') fileName: string,
     @Query('contentType') contentType: string,
-    @Query('dir') dir = 'user-uploads/',
   ) {
     if (!fileName || !contentType) {
       throw new BadRequestException('fileName and contentType are required');
@@ -19,8 +18,6 @@ export class OssController {
     if (fileName.includes('..') || fileName.startsWith('/')) {
       throw new BadRequestException('Invalid file name');
     }
-    const cleanContentType = contentType.trim();
-    const objectName = `${dir}${fileName}`;
-    return this.ossService.getUploadUrl(objectName, cleanContentType, 300);
+    return this.ossService.getUploadUrl(fileName, contentType);
   }
 }

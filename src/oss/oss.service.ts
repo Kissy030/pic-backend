@@ -16,21 +16,19 @@ export class OssService {
 
   /**
    @param objectName
-   * @param expires 过期时间（秒），默认 300 秒（5分钟）
+   * @param expires 
    */
-  getUploadUrl(objectName: string, contentType: string, expires = 300) {
-    const url = this.client.signatureUrl(objectName, {
+
+  async getUploadUrl(objectName: string, contentType: string) {
+    const uploadUrl = this.client.signatureUrl(objectName, {
       method: 'PUT',
-      expires,
-      headers: {
-        'Content-Type': contentType,
-      },
+      expires: 3600,
+      mime: contentType.trim(),
     });
-    const accessUrl = `https://mapbed-wyz.oss-cn-hangzhou.aliyuncs.com/${objectName}`;
+
     return {
-      uploadUrl: url,
-      objectName,
-      accessUrl,
+      uploadUrl,
+      accessUrl: `https://mapbed-wyz.oss-cn-hangzhou.aliyuncs.com/${objectName}`,
     };
   }
   getDownloadUrl(objectName: string, expires = 3600) {
