@@ -18,11 +18,11 @@ export class OssService {
    @param objectName
    * @param expires 过期时间（秒），默认 300 秒（5分钟）
    */
-  getUploadUrl(objectName: string, expires = 300) {
+  getUploadUrl(objectName: string, contentType: string, expires = 300) {
     const url = this.client.signatureUrl(objectName, {
       method: 'PUT',
       expires,
-      headers: { 'Content-Type': 'image/jpeg' },
+      headers: { 'Content-Type': contentType },
     });
 
     return {

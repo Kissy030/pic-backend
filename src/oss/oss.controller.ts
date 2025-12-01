@@ -8,6 +8,7 @@ export class OssController {
   @Get('upload-url')
   getUploadUrl(
     @Query('fileName') fileName: string,
+    @Query('contentType') contentType: string,
     @Query('dir') dir = 'user-uploads/',
   ) {
     if (!fileName) {
@@ -21,7 +22,11 @@ export class OssController {
     // 构造 OSS 路径
     const objectName = `${dir}${fileName}`;
 
-    const { uploadUrl } = this.ossService.getUploadUrl(objectName, 300); // 5分钟有效
+    const { uploadUrl } = this.ossService.getUploadUrl(
+      objectName,
+      contentType,
+      300,
+    ); // 5分钟有效
 
     return {
       uploadUrl,
