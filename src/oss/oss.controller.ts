@@ -11,27 +11,16 @@ export class OssController {
     @Query('contentType') contentType: string,
     @Query('dir') dir = 'user-uploads/',
   ) {
-    if (!fileName) {
-      throw new BadRequestException('fileName is required');
+    if (!fileName || !contentType) {
+      throw new BadRequestException('fileName and contentType are required');
     }
 
+    // 安全校验
     if (fileName.includes('..') || fileName.startsWith('/')) {
       throw new BadRequestException('Invalid file name');
     }
-
-    // 构造 OSS 路径
+    const cleanContentType = contentType.trim();
     const objectName = `${dir}${fileName}`;
-
-    const { uploadUrl } = this.ossService.getUploadUrl(
-      objectName,
-      contentType,
-      300,
-    ); // 5分钟有效
-
-    return {
-      uploadUrl,
-      objectName,
-      accessUrl: `https://mapbed-wyz.oss-cn-hangzhou.aliyuncs.com/${objectName}`,
-    };
+    return this.ossService.getUploadUrl(objectName, cleanContentType, 300);
   }
 }

@@ -22,12 +22,13 @@ export class OssService {
     const url = this.client.signatureUrl(objectName, {
       method: 'PUT',
       expires,
-      mime: contentType,
+      mime: contentType.trim(),
     });
-
+    const accessUrl = `https://mapbed-wyz.oss-cn-hangzhou.aliyuncs.com/${objectName}`;
     return {
       uploadUrl: url,
       objectName,
+      accessUrl,
     };
   }
   getDownloadUrl(objectName: string, expires = 3600) {
