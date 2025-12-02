@@ -1,110 +1,51 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as Credential from '@alicloud/credentials';
 import * as OSS from 'ali-oss';
 
-// 定义返回的临时凭证类型
-export interface StsCredentials {
-  AccessKeyId: string;
-  AccessKeySecret: string;
-  SecurityToken: string;
-  Expiration: string; // ISO 8601 格式的时间字符串
-}
-
 @Injectable()
-export class StsService {
-  private readonly logger = new Logger(StsService.name);
-
-  // STS 客户端配置
-  private stsClient: any | null = null;
-
-  private async initializeStsClient() {
-    // 3. 检查是否已经初始化过
-    if (!this.stsClient) {
-      try {
-        // 动态导入 @alicloud/pop-core
-        const CoreModule = await import('@alicloud/pop-core');
-        const Core = CoreModule.default; // 获取默认导出
-
-        // 4. 在这里赋值
-        this.stsClient = new Core({
-          accessKeyId: process.env.RAM_USER_ACCESS_KEY_ID || '',
-          accessKeySecret: process.env.RAM_USER_ACCESS_KEY_SECRET || '',
-          endpoint: 'https://sts.aliyuncs.com',
-          apiVersion: '2015-04-01',
-        });
-        this.logger.log('STS Client initialized successfully.');
-      } catch (error) {
-        this.logger.error('Failed to initialize STS Client:', error.stack);
-        // 可以考虑缓存错误状态或抛出异常
-        throw new Error(`Failed to initialize STS client: ${error.message}`);
-      }
-    }
-  }
-
-  /**
-   * 调用 STS AssumeRole 获取临时凭证
-   * @param roleArn RAM 角色的 ARN
-   * @param roleSessionName 会话名称
-   * @param durationSeconds 凭证有效期（秒），最大 3600
-   * @returns Promise<StsCredentials>
-   */
-  async assumeRole(
-    roleArn: string,
-    roleSessionName: string,
-    durationSeconds: number = 3600,
-  ): Promise<StsCredentials> {
-    await this.initializeStsClient();
-    if (!this.stsClient) {
-      throw new Error('STS Client failed to initialize.');
-    }
-    try {
-      const params = {
-        RoleArn: roleArn,
-        RoleSessionName: roleSessionName,
-        DurationSeconds: Math.min(durationSeconds, 3600), // 限制最大 1 小时
-      };
-
-      const requestOption = {
-        method: 'POST',
-      };
-
-      this.logger.log(
-        `Calling AssumeRole for RoleArn: ${roleArn}, SessionName: ${roleSessionName}`,
-      );
-
-      const result: any = await this.stsClient!.request(
-        'AssumeRole',
-        params,
-        requestOption,
-      );
-
-      const credentials: StsCredentials = result.Credentials;
-
-      this.logger.debug('Successfully obtained temporary credentials.');
-      return credentials;
-    } catch (error) {
-      this.logger.error('Failed to assume role via STS.', error.stack);
-      throw new Error(`STS AssumeRole failed: ${error.message}`);
-    }
-  }
-
-  /**
-   * 使用临时凭证创建一个 OSS 客户端实例
-   * @param credentials 临时凭证
-   * @param region Bucket 所在区域
-   * @param bucket Bucket 名称
-   * @returns OSS Client 实例
-   */
-  createOssClient(
-    credentials: StsCredentials,
-    region: string,
-    bucket: string,
-  ): OSS {
-    return new OSS({
-      region: region,
-      accessKeyId: credentials.AccessKeyId,
-      accessKeySecret: credentials.AccessKeySecret,
-      stsToken: credentials.SecurityToken,
-      bucket: bucket,
+export class StsService implements OnModuleInit {
+  private client: OSS;
+  constructor(private readonly configService: ConfigService) {}
+  async onModuleInit() {
+    const credentialsConfig = new Credential.Config({
+      type: 'ram_role_arn',
+      accessKeyId: this.configService.get<string>('RAM_USER_ACCESS_KEY_ID'),
+      accessKeySecret: this.configService.get<string>(
+        'RAM_USER_ACCESS_KEY_SECRET',
+      ),
+      roleArn: this.configService.get<string>('OSS_ROLE_ARN'), // 替换 <RoleArn>
+      roleSessionName: `ImgUploadSession_${Date.now()}`,
+      roleSessionExpiration: 3600,
+      // policy: 可选
     });
+
+    const credentialClient = new Credential.default(credentialsConfig);
+
+    // 初始凭证
+    const credential = await credentialClient.getCredential();
+
+    this.client = new OSS({
+      region: this.configService.get<string>('OSS_REGION'),
+      bucket: this.configService.get<string>('OSS_BUCKET_NAME'),
+      accessKeyId: credential.accessKeyId,
+      accessKeySecret: credential.accessKeySecret,
+      stsToken: credential.securityToken,
+      refreshSTSTokenInterval: 0,
+      refreshSTSToken: async () => {
+        const fresh = await credentialClient.getCredential();
+        return {
+          accessKeyId: fresh.accessKeyId,
+          accessKeySecret: fresh.accessKeySecret,
+          stsToken: fresh.securityToken,
+        };
+      },
+    });
+  }
+  getClient(): OSS {
+    if (!this.client) {
+      throw new Error('OSS client is not initialized yet.');
+    }
+    return this.client;
   }
 }
