@@ -18,6 +18,6 @@ export class OssController {
     if (fileName.includes('..') || fileName.startsWith('/')) {
       throw new BadRequestException('Invalid file name');
     }
-    return this.ossService.getUploadUrl(fileName);
+    return this.ossService.getUploadUrl(fileName, contentType);
   }
 }
