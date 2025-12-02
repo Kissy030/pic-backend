@@ -15,8 +15,8 @@ import * as OSS from 'ali-oss';
 import { ConfigService } from '@nestjs/config'; // 推荐使用 ConfigService
 
 @Controller('upload')
-export class AppController {
-  private readonly logger = new Logger(AppController.name);
+export class StsController {
+  private readonly logger = new Logger(StsController.name);
 
   constructor(
     private readonly stsService: StsService,
@@ -31,7 +31,6 @@ export class AppController {
   @UseInterceptors(FileInterceptor('image')) // 'image' 是前端 FormData 中文件的 key
   async uploadImage(
     @UploadedFile() file: Express.Multer.File, // 获取上传的文件
-    @Req() req: Request,
     @Res() res: Response,
   ) {
     // 1. 基本校验
