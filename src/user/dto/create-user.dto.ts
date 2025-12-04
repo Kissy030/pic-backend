@@ -14,7 +14,6 @@ export class CreateUserDto {
 
   @IsString({ message: '密码必须是字符串' })
   @IsNotEmpty({ message: '密码不能为空' })
-  @MinLength(6, { message: '密码长度不能少于6位' })
   @Matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9]{6,}$/, {
     message:
       '密码必须至少6位，且包含至少一个字母和一个数字，只能使用英文字母和数字',
