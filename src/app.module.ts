@@ -34,7 +34,7 @@ import { StsService } from './sts/sts.service';
     StsModule,
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: 'mysql-pic-container',
+      host: 'mysql-container',
       username: 'root',
       password: '123456',
       database: 'pic_db',
